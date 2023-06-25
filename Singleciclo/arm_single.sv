@@ -180,7 +180,7 @@ module controller(input  logic         clk, reset,
                   output logic         ALUSrc, 
                   output logic [1:0]   ALUControl,
                   output logic         MemWrite, MemtoReg,
-						      output logic			      MovFlag,
+		  output logic	       MovFlag,
                   output logic         PCSrc);
 
   logic [1:0] FlagW;
@@ -201,7 +201,7 @@ module decoder(input  logic [1:0] Op,
                output logic       PCS, RegW, MemW,
                output logic       MemtoReg, ALUSrc, MovF,
                output logic [1:0] ImmSrc, RegSrc, ALUControl);
-
+ 
   logic [9:0] controls;
   logic       Branch, ALUOp;
 
@@ -340,7 +340,7 @@ module datapath(input  logic        clk, reset,
                 input  logic [1:0]  ALUControl,
                 input  logic        MemtoReg,
                 input  logic        PCSrc,
-					      input  logic			MovFlag,
+		input  logic	    MovFlag,
                 output logic [3:0]  ALUFlags,
                 output logic [31:0] PC,
                 input  logic [31:0] Instr,
