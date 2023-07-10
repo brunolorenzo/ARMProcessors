@@ -142,7 +142,7 @@ module imem(input  logic [31:0] a,
   logic [31:0] RAM[63:0];
 
   initial
-      $readmemh("memfile.dat",RAM);
+      $readmemh("memfile2.dat",RAM);
 
   assign rd = RAM[a[31:2]]; // word aligned
 endmodule
@@ -183,7 +183,7 @@ module controller(input  logic         clk, reset,
                   output logic         MemWrite, MemtoReg,
 		  output logic	       MovFlag,
                   output logic         PCSrc,	
-		  output logic         MaskLDRB, MaskSTRB, BranchLink);
+		  output logic         MaskLDRB, MaskSTRB, BLFlag);
 
   logic [1:0] FlagW;
   logic       PCS, RegW, MemW, MovF, NoWrite;
@@ -193,7 +193,7 @@ module controller(input  logic         clk, reset,
               MemtoReg, ALUSrc, MovF, NoWrite, ImmSrc, RegSrc, ALUControl, MaskLDRB, MaskSTRB, BLFlag);
   condlogic cl(clk, reset, NoWrite, Instr[31:28], ALUFlags,
                FlagW, PCS, RegW, MemW, MovF,
-               PCSrc, RegWrite, MemWrite, MovFlag, BLFlag, BranchLink);
+               PCSrc, RegWrite, MemWrite, MovFlag, BLFlag);
 endmodule
 
 module decoder(input  logic [1:0] Op,
@@ -231,7 +231,7 @@ module decoder(input  logic [1:0] Op,
 			controls = 13'b1001110100000; 
   	                        // BL
   	  2'b10: if (Funct[4])  controls = 13'b0110101010001;
-				                   //B
+				// B
 		 else		controls = 13'b0110100010000;
   	                        // Unimplemented
   	  default:              controls = 13'bx;          
@@ -311,8 +311,7 @@ module condlogic(input  logic       clk, reset, NoWrite,
                  input  logic [1:0] FlagW,
                  input  logic       PCS, RegW, MemW, MovF,
                  output logic       PCSrc, RegWriteBL, MemWrite, MovFlag,
-                 input  logic       BLFlag,
-                 output logic       BranchLink);
+                 input  logic       BLFlag);
                  
   logic [1:0] FlagWrite;
   logic [3:0] Flags;
@@ -326,13 +325,12 @@ module condlogic(input  logic       clk, reset, NoWrite,
 
   // write controls are conditional
   condcheck cc(Cond, Flags, CondEx);
-  assign FlagWrite = FlagW & {2{CondEx}};
-  assign RegWrite  = RegW  & CondEx & ~NoWrite;
-  assign MemWrite  = MemW  & CondEx;
-  assign PCSrc     = PCS   & CondEx;
-  assign MovFlag   = MovF  & CondEx;
-  assign BranchLink = BLFlag & CondEx;
-  assign RegWriteBL = (BranchLink) ? 1'b1 : RegWrite;
+  assign FlagWrite  = FlagW & {2{CondEx}};
+  assign RegWrite   = RegW  & CondEx & ~NoWrite;
+  assign MemWrite   = MemW  & CondEx;
+  assign PCSrc      = PCS   & CondEx;
+  assign MovFlag    = MovF  & CondEx;
+  assign RegWriteBL = (BLFlag) ? 1'b1 : RegWrite;
 endmodule    
 
 module condcheck(input  logic [3:0] Cond,
@@ -408,9 +406,6 @@ module datapath(input  logic        clk, reset,
                  RA3, Result, PCPlus8, 
                  SrcA, wd);
 
-  //regfile     rf(clk, RegWrite, RA1, RA2,
-                 //Instr[15:12], Result, PCPlus8,
-                 //SrcA, wd);
   //MASCARA STRB
   always_comb
       case(MaskSTRB)
@@ -440,12 +435,11 @@ module regfile(input  logic        clk,
   logic [31:0] WriteDataPC;
   logic [31:0] rf[14:0];
 
-  assign WriteDataPC = (BL) ? PC4 : wd3;
-  //always_comb
-      //case(BL)
-	//1'b0: WriteDataPC = wd3;
-	//1'b1: WriteDataPC = PC4;
-      //endcase
+  always_comb
+      case(BL)
+	1'b0: WriteDataPC = wd3;
+	1'b1: WriteDataPC = PC4;
+      endcase
 
   // three ported register file
   // read two ports combinationally
@@ -536,7 +530,7 @@ module alu(input  logic [31:0] a, b,
   assign zero     = (Result == 32'b0);
   assign carry    = (ALUControl[1] == 1'b0) & sum[32];
   assign overflow = (ALUControl[1] == 1'b0) & ~(a[31] ^ b[31] ^ ALUControl[0]) & (a[31] ^ sum[31]); 
-  assign ALUFlags    = {neg, zero, carry, overflow};
+  assign ALUFlags = {neg, zero, carry, overflow};
 endmodule
 
 
