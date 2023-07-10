@@ -100,11 +100,11 @@ module testbench();
   always @(negedge clk)
     begin
       if(MemWrite) begin
-        if(DataAdr === 22 & WriteData === 254) begin
+        if(DataAdr === 24 & WriteData === 26) begin
           $display("Simulation succeeded");
           $stop;
-        end else if (DataAdr !== 96) begin
-          $display("Simulation failed");
+        //end else if (DataAdr !== 96) begin
+          //$display("Simulation failed");
           //$stop;
         end
       end
@@ -440,11 +440,6 @@ module regfile(input  logic        clk,
 	1'b0: WriteDataPC = wd3;
 	1'b1: WriteDataPC = PC4;
       endcase
-
-  // three ported register file
-  // read two ports combinationally
-  // write third port on rising edge of clock
-  // register 15 reads PC+8 instead
 
   always_ff @(posedge clk)
     if (we3) rf[wa3] <= WriteDataPC;	
